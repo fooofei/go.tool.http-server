@@ -5,7 +5,7 @@ Principle:
 
 1 With logging for monitor incomer.
 
-2 Use golang's official packets as we can.
+2 Use golang's official packages as we can.
 
 
 ```shell
