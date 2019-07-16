@@ -1,13 +1,49 @@
 package main
 
 import (
+    "crypto/md5"
+    "crypto/sha256"
+    "encoding/hex"
+    "encoding/json"
     "flag"
     "fmt"
+    "io/ioutil"
     "log"
     "net/http"
     "github.com/gorilla/handlers"
     "os"
 )
+
+func handleUpload(w http.ResponseWriter, r *http.Request) {
+    var err error
+    if err = r.ParseForm(); err != nil {
+        _,_ = fmt.Fprintf(w, "err = %v\n", err)
+        return
+    }
+
+    respContent := make(map[string]string)
+
+    respContent["form"] = fmt.Sprintf("%v", r.PostForm)
+    f,fh, err := r.FormFile("file")
+    if err != nil {
+        _,_ = fmt.Fprintf(w, "err = %v\n", err)
+        return
+    }
+    respContent["filename"] = fh.Filename
+    fall,err := ioutil.ReadAll(f)
+    if err != nil {
+        _,_ = fmt.Fprintf(w, "err = %v\n", err)
+        return
+    }
+    sumMD5 := md5.Sum(fall)
+    sumSHA256 := sha256.Sum256(fall)
+
+    respContent["filesize"] = fmt.Sprintf("%v", len(fall))
+    respContent["md5"] = hex.EncodeToString(sumMD5[:])
+    respContent["sha256"] = hex.EncodeToString(sumSHA256[:])
+
+    _ = json.NewEncoder(w).Encode(respContent)
+}
 
 func main() {
     var port string
@@ -18,7 +54,14 @@ func main() {
     addr := fmt.Sprintf("0.0.0.0:%v", port)
 
     log.Printf("Serving HTTP on %v", addr)
+
+
+
     h := http.FileServer(http.Dir("."))
-    hlog := handlers.LoggingHandler(os.Stdout, h)
-    log.Fatal(http.ListenAndServe(addr, hlog))
+    m := http.NewServeMux()
+    m.HandleFunc("/upload", handleUpload)
+    m.Handle("/", h)
+    hLog := handlers.CombinedLoggingHandler(os.Stdout, m)
+
+    log.Fatal(http.ListenAndServe(addr, hLog))
 }
