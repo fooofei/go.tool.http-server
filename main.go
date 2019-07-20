@@ -42,6 +42,10 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
     respContent["md5"] = hex.EncodeToString(sumMD5[:])
     respContent["sha256"] = hex.EncodeToString(sumSHA256[:])
 
+    // 这句话必须写在下面的前面，不然不生效
+    w.Header().Set("Content-Type", "application/json")
+
+    // w.cw.header  w.handlerHeader 是个坑
     _ = json.NewEncoder(w).Encode(respContent)
 }
 
