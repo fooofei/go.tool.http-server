@@ -11,6 +11,24 @@ import (
 
 // 这里有一份指导 https://tonybai.com/2015/04/30/go-and-https/
 
+// 使用其他工具测试命令
+// openssl s_client -connect 127.0.0.1:8100   
+// 这个为什么也能连接，奇怪， 命令输入之后，要输入 http Get
+// GET / HTTP/1.1
+// Host: 127.0.0.1:8100
+// 就好像是在忽略证书校验，直接访问了
+// openssl s_client -CAfile ca.crt -connect 127.0.0.1:8100
+// 效果跟上面的命令一样
+
+// curl https://127.0.0.1:8100
+// 报错 curl: (60) Peer's Certificate issuer is not recognized.
+
+// curl --cacert ca.crt https://127.0.0.1:8100
+// 访问通过
+
+
+
+
 // NewCertPool read ca.cert files to make CertPool.
 func NewCertPool(CAFiles []string) (*x509.CertPool, error) {
 	cp := x509.NewCertPool()
