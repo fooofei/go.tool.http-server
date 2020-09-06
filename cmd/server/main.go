@@ -1,6 +1,9 @@
 package main
 
+// 这里做成一份标准的如何建立 http server 的范例代码
+
 import (
+	"context"
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/hex"
@@ -9,6 +12,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 
@@ -50,13 +54,25 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(respContent)
 }
 
+func listenAndServe(ctx context.Context, addr string, handler http.Handler) error {
+	lc := net.ListenConfig{}
+	ln, err := lc.Listen(ctx, "tcp", addr)
+	if err != nil {
+		return err
+	}
+	serv := &http.Server{Addr: addr, Handler: handler}
+	// serv.ServeTLS() will build for tls
+	return serv.Serve(ln)
+}
+
 func main() {
 	var port string
 	flag.StringVar(&port, "port", "8100", "The port of http file server")
 	flag.Parse()
 	log.SetFlags(log.LstdFlags)
+	ctx, cancel := context.WithCancel(context.Background())
 
-	addr := fmt.Sprintf("0.0.0.0:%v", port)
+	addr := net.JoinHostPort("0.0.0.0", port)
 
 	log.Printf("Serving HTTP on %v", addr)
 
@@ -66,5 +82,7 @@ func main() {
 	m.Handle("/", h)
 	hLog := handlers.CombinedLoggingHandler(os.Stdout, m)
 
-	log.Fatal(http.ListenAndServe(addr, hLog))
+	_ = cancel
+	log.Fatal(listenAndServe(ctx, addr, hLog))
+
 }
