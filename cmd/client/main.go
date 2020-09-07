@@ -26,6 +26,13 @@ import (
 // curl --cacert ca.crt https://127.0.0.1:8100
 // 访问通过
 
+// tls 校验地址不通过
+// 报错 x509: certificate is valid for 192.168.28.106, 192.168.20.234, 192.168.0.1, 127.0.0.1, not x.x.x.x
+// 绕过办法是设置 tls.Config ServerName 为上述一个有效的值，这样就使校验合法
+// 看到 ServerName 使用的代码位置是
+// net/http/transport.go:1488 
+// func (pconn *persistConn) addTLS(name string, trace *httptrace.ClientTrace) error 
+// 这个地址是默认从 https path 里取的
 
 
 
