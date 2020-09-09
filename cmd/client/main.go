@@ -33,6 +33,13 @@ import (
 // net/http/transport.go:1488 
 // func (pconn *persistConn) addTLS(name string, trace *httptrace.ClientTrace) error 
 // 这个地址是默认从 https path 里取的
+// 用这个命令查询
+// " X509v3 Subject Alternative Name:"
+// openssl s_client -connect 10.33.111.6:443  | openssl x509 -noout -text
+
+// SAN 决定了允许以什么样的 http path 访问该服务器
+// 其他 path 访问会报告错误 
+
 
 
 
