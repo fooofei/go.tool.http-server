@@ -66,13 +66,11 @@ func listenAndServe(ctx context.Context, addr string, handler http.Handler) erro
 }
 
 func main() {
-	var port string
-	flag.StringVar(&port, "port", "8100", "The port of http file server")
+	var addr string
+	flag.StringVar(&addr, "addr", ":8100", "The addr of http file server")
 	flag.Parse()
 	log.SetFlags(log.LstdFlags)
 	ctx, cancel := context.WithCancel(context.Background())
-
-	addr := net.JoinHostPort("0.0.0.0", port)
 
 	log.Printf("Serving HTTP on %v", addr)
 
