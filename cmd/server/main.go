@@ -11,11 +11,14 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
+	stdlog "log"
 	"net"
 	"net/http"
 	"os"
+	"sync/atomic"
 
+	"github.com/fooofei/stdr"
+	"github.com/go-logr/logr"
 	"github.com/gorilla/handlers"
 )
 
@@ -61,18 +64,43 @@ func listenAndServe(ctx context.Context, addr string, handler http.Handler) erro
 		return err
 	}
 	serv := &http.Server{Addr: addr, Handler: handler}
-	// serv.ServeTLS() will build for tls
+	//baseDir := "" // "D:/0data/src/sim_http_server"
+	//return serv.ServeTLS(ln, filepath.Join(baseDir, "certs/server.crt"),
+	//	filepath.Join(baseDir, "certs/server.key")) // will build for tls
 	return serv.Serve(ln)
+}
+
+type countHandler struct {
+	Count  int64
+	logger logr.Logger
+}
+
+func (h *countHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	w.Header().Add("Content-type", "text/html")
+	w.WriteHeader(http.StatusBadRequest)
+	_, _ = fmt.Fprintf(w, "<html>"+
+		"<head>"+
+		"<title>ZeroHTTPd: Unimplemented</title>"+
+		"</head>"+
+		"<body>"+
+		"<h1>Bad Request (Unimplemented) %v </h1>"+
+		"<p>Your client sent a request ZeroHTTPd did not understand and it is probably not your fault.</p>"+
+		"</body>"+
+		"</html>", h.Count)
+	h.logger.Info("show count", "count", h.Count)
+	atomic.AddInt64(&h.Count, 1)
 }
 
 func main() {
 	var addr string
 	flag.StringVar(&addr, "addr", ":8100", "The addr of http file server")
 	flag.Parse()
-	log.SetFlags(log.LstdFlags)
+	logger := stdr.New(stdlog.New(os.Stdout, "", stdlog.Lshortfile|stdlog.LstdFlags))
+	logger = logger.WithValues("pid", os.Getpid())
+
 	ctx, cancel := context.WithCancel(context.Background())
 
-	log.Printf("Serving HTTP on %v", addr)
+	logger.Info("Serving HTTP", "addr", addr)
 
 	h := http.FileServer(http.Dir("."))
 	m := http.NewServeMux()
@@ -81,6 +109,8 @@ func main() {
 	hLog := handlers.CombinedLoggingHandler(os.Stdout, m)
 
 	_ = cancel
-	log.Fatal(listenAndServe(ctx, addr, hLog))
-
+	err := listenAndServe(ctx, addr, hLog)
+	if err != nil {
+		panic(err)
+	}
 }
