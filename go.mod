@@ -1,11 +1,10 @@
 module github.com/fooofei/sim_http_server
 
-go 1.19
+go 1.20
 
 require (
-	github.com/go-logr/logr v1.2.3
-	github.com/go-logr/stdr v1.2.2
 	github.com/gorilla/handlers v1.5.1
+	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
 )
 
 require github.com/felixge/httpsnoop v1.0.3 // indirect

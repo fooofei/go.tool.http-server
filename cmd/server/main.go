@@ -11,7 +11,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	stdlog "log"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -21,9 +20,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-logr/logr"
-	"github.com/go-logr/stdr"
 	"github.com/gorilla/handlers"
+	"golang.org/x/exp/slog"
 )
 
 func handleUpload(w http.ResponseWriter, r *http.Request) {
@@ -90,7 +88,7 @@ func serve(ctx context.Context, addr string, handler http.Handler) error {
 
 type countHandler struct {
 	Count  atomic.Int64
-	logger logr.Logger
+	logger slog.Logger
 }
 
 func (h *countHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -113,7 +111,8 @@ func main() {
 	var addr string
 	flag.StringVar(&addr, "addr", ":8100", "The addr of http file server")
 	flag.Parse()
-	var logger = stdr.New(stdlog.New(os.Stdout, fmt.Sprintf("pid=%v ", os.Getpid()), stdlog.LstdFlags))
+	var logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{}))
+	logger = logger.With("pid", os.Getpid())
 	var ctx, cancel = signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	logger.Info("Serving HTTP", "addr", addr)
