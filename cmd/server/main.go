@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -42,7 +42,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	respContent["filename"] = fileHeader.Filename
 	var fileContent []byte
-	if fileContent, err = ioutil.ReadAll(file); err != nil {
+	if fileContent, err = io.ReadAll(file); err != nil {
 		fmt.Fprintf(w, "err = %v\n", err)
 		return
 	}
